@@ -15,13 +15,13 @@ pub enum AppReturn {
     Continue,
 }
 
-pub struct App {
+pub struct App<'a> {
     actions: Actions,
     state: AppState,
-    game: Game,
+    game: Game<'a>,
 }
 
-impl App {
+impl<'a> App<'a> {
     pub fn new() -> Self {
         let actions = Actions::from(Action::iterator().cloned().collect::<Vec<_>>());
         let state = AppState::initialized();
@@ -56,6 +56,14 @@ impl App {
                 }
                 Action::RotateRight => {
                     self.game.rotate_right();
+                    AppReturn::Continue
+                }
+                Action::HardDrop => {
+                    self.game.hard_drop();
+                    AppReturn::Continue
+                }
+                Action::Hold => {
+                    self.game.hold();
                     AppReturn::Continue
                 }
             }

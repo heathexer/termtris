@@ -29,12 +29,18 @@ where
 
     let tmp_rect = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(18), Constraint::Min(0)])
+        .constraints([
+            Constraint::Length(Game::DISPLAY_HEIGHT as u16 + 2),
+            Constraint::Min(0),
+        ])
         .split(main_rect)[0];
     let main_chunks = Layout::default()
         .margin(0)
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Length(22), Constraint::Length(8)])
+        .constraints([
+            Constraint::Length((Game::WIDTH as u16 * 2) + 2),
+            Constraint::Length(8),
+        ])
         .split(tmp_rect);
     let game_rect = main_chunks[0];
     let panel_rect = main_chunks[1];
@@ -63,8 +69,8 @@ where
     let title = draw_title();
     f.render_widget(title, title_rect);
 
-    draw_next_block(f, next_block_rect);
-    draw_hold_block(f, hold_block_rect);
+    draw_next_block(f, next_block_rect, &app.game);
+    draw_hold_block(f, hold_block_rect, &app.game);
 
     let help = draw_help();
     f.render_widget(help, help_rect);
@@ -112,18 +118,12 @@ fn draw_help<'a>() -> Table<'a> {
         .column_spacing(1)
 }
 
-fn draw_next_block<B>(f: &mut Frame<B>, rect: Rect)
+fn draw_next_block<B>(f: &mut Frame<B>, rect: Rect, game: &Game)
 where
     B: Backend,
 {
-    let text = vec![
-        Spans::from(Span::raw("")),
-        Spans::from(Span::raw("██  ")),
-        Spans::from(Span::raw("████")),
-        Spans::from(Span::raw("  ██")),
-    ];
-
-    let widget = Paragraph::new(text)
+    let widget = game
+        .next_piece_paragraph()
         .block(
             Block::default()
                 .borders(Borders::ALL)
@@ -136,18 +136,12 @@ where
     f.render_widget(widget, rect);
 }
 
-fn draw_hold_block<B>(f: &mut Frame<B>, rect: Rect)
+fn draw_hold_block<B>(f: &mut Frame<B>, rect: Rect, game: &Game)
 where
     B: Backend,
 {
-    let text = vec![
-        Spans::from(Span::raw("██")),
-        Spans::from(Span::raw("██")),
-        Spans::from(Span::raw("██")),
-        Spans::from(Span::raw("██")),
-    ];
-
-    let widget = Paragraph::new(text)
+    let widget = game
+        .hold_piece_paragraph()
         .block(
             Block::default()
                 .borders(Borders::ALL)

@@ -17,7 +17,7 @@ pub enum AppReturn {
 
 pub struct App<'a> {
     actions: Actions,
-    state: AppState,
+    _state: AppState,
     game: Game<'a>,
 }
 
@@ -28,7 +28,7 @@ impl<'a> App<'a> {
         let game = Game::new();
         App {
             actions,
-            state,
+            _state: state,
             game,
         }
     }

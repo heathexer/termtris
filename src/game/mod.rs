@@ -166,8 +166,6 @@ impl<'a> Game<'a> {
         }
 
         self.can_hold = false;
-        self.piece_offset = (21, 4);
-        self.cur_rotation = 0;
     }
 
     fn reset_piece(&mut self, use_next_piece: bool) {
@@ -184,6 +182,11 @@ impl<'a> Game<'a> {
 
         self.piece_offset = (21, 3);
         self.cur_rotation = 0;
+
+        // Lose condition
+        if !self.try_move(self.piece_offset, self.cur_rotation) {
+            self.board.reset();
+        }
 
         self.update_ghost_position();
     }

@@ -11,6 +11,12 @@ use tui::{
 #[derive(Clone)]
 pub struct Board(pub [[BoardColor; Game::WIDTH]; Game::HEIGHT]);
 
+impl Board {
+    pub fn reset(&mut self) {
+        self.0 = [[BoardColor::Empty; Game::WIDTH]; Game::HEIGHT];
+    }
+}
+
 impl<'a> Into<Paragraph<'a>> for Board {
     fn into(self) -> Paragraph<'a> {
         let mut text = Vec::new();

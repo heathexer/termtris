@@ -76,6 +76,8 @@ where
     f.render_widget(help, help_rect);
 
     draw_game_board(f, game_rect, &app.game);
+
+    draw_score(f, _unused_rect, &app.game);
 }
 
 fn draw_title<'a>() -> Paragraph<'a> {
@@ -167,6 +169,23 @@ where
         )
         .alignment(Alignment::Center)
         .style(Style::default().fg(Color::Cyan));
+
+    f.render_widget(widget, rect);
+}
+
+fn draw_score<B>(f: &mut Frame<B>, rect: Rect, game: &Game)
+where
+    B: Backend,
+{
+    let widget = game
+        .get_score_paragraph()
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .style(Style::default().fg(Color::White)),
+        )
+        .alignment(Alignment::Left)
+        .style(Style::default().fg(Color::Green));
 
     f.render_widget(widget, rect);
 }

@@ -8,16 +8,69 @@ use tui::{
 pub struct Piece {
     pub shapes: [[[u8; 4]; 4]; 4],
     pub color: BoardColor,
+    pub kicks: [[[(isize, isize); 4]; 4]; 4],
 }
-
-// pub enum Piece {
-//     O,
-//     L,
-// }
 
 use super::colors::{self, BoardColor};
 
 impl Piece {
+    // Kick data from here https://tetris.fandom.com/wiki/SRS#Wall_Kicks
+    const O_KICKS: [[[(isize, isize); 4]; 4]; 4] = [[[(0, 0); 4]; 4]; 4];
+
+    const I_KICKS: [[[(isize, isize); 4]; 4]; 4] = [
+        [
+            [(0, 0), (0, 0), (0, 0), (0, 0)],
+            [(-2, 0), (1, 0), (-2, -1), (1, 2)],
+            [(0, 0), (0, 0), (0, 0), (0, 0)],
+            [(-1, 0), (2, 0), (-1, 2), (2, -1)],
+        ],
+        [
+            [(2, 0), (-1, 0), (2, 1), (-1, -2)],
+            [(0, 0), (0, 0), (0, 0), (0, 0)],
+            [(-1, 0), (2, 0), (-1, 2), (2, -1)],
+            [(0, 0), (0, 0), (0, 0), (0, 0)],
+        ],
+        [
+            [(0, 0), (0, 0), (0, 0), (0, 0)],
+            [(1, 0), (-2, 0), (1, -2), (-2, 1)],
+            [(0, 0), (0, 0), (0, 0), (0, 0)],
+            [(2, 0), (-1, 0), (2, 1), (-1, -2)],
+        ],
+        [
+            [(1, 0), (-2, 0), (1, -2), (-2, 1)],
+            [(0, 0), (0, 0), (0, 0), (0, 0)],
+            [(-2, 0), (1, 0), (-2, -1), (1, 2)],
+            [(0, 0), (0, 0), (0, 0), (0, 0)],
+        ],
+    ];
+
+    const NORMAL_KICKS: [[[(isize, isize); 4]; 4]; 4] = [
+        [
+            [(0, 0), (0, 0), (0, 0), (0, 0)],
+            [(-1, 0), (-1, 1), (0, -2), (-1, -2)],
+            [(0, 0), (0, 0), (0, 0), (0, 0)],
+            [(1, 0), (1, 1), (0, -2), (1, -2)],
+        ],
+        [
+            [(1, 0), (1, -1), (0, 2), (1, 2)],
+            [(0, 0), (0, 0), (0, 0), (0, 0)],
+            [(1, 0), (1, -1), (0, 2), (1, 2)],
+            [(0, 0), (0, 0), (0, 0), (0, 0)],
+        ],
+        [
+            [(0, 0), (0, 0), (0, 0), (0, 0)],
+            [(-1, 0), (-1, 1), (0, -2), (-1, -2)],
+            [(0, 0), (0, 0), (0, 0), (0, 0)],
+            [(1, 0), (1, 1), (0, -2), (1, -2)],
+        ],
+        [
+            [(-1, 0), (-1, -1), (0, 2), (-1, 2)],
+            [(0, 0), (0, 0), (0, 0), (0, 0)],
+            [(-1, 0), (-1, -1), (0, 2), (-1, 2)],
+            [(0, 0), (0, 0), (0, 0), (0, 0)],
+        ],
+    ];
+
     pub const O: Piece = Piece {
         shapes: [
             [[0, 1, 1, 0], [0, 1, 1, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
@@ -26,6 +79,7 @@ impl Piece {
             [[0, 1, 1, 0], [0, 1, 1, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
         ],
         color: BoardColor::Yellow,
+        kicks: Self::O_KICKS,
     };
     pub const I: Piece = Piece {
         shapes: [
@@ -35,6 +89,7 @@ impl Piece {
             [[0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]],
         ],
         color: BoardColor::LightBlue,
+        kicks: Self::I_KICKS,
     };
     pub const S: Piece = Piece {
         shapes: [
@@ -44,6 +99,7 @@ impl Piece {
             [[1, 0, 0, 0], [1, 1, 0, 0], [0, 1, 0, 0], [0, 0, 0, 0]],
         ],
         color: BoardColor::Red,
+        kicks: Self::NORMAL_KICKS,
     };
     pub const Z: Piece = Piece {
         shapes: [
@@ -53,6 +109,7 @@ impl Piece {
             [[0, 1, 0, 0], [1, 1, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0]],
         ],
         color: BoardColor::Green,
+        kicks: Self::NORMAL_KICKS,
     };
     pub const T: Piece = Piece {
         shapes: [
@@ -62,6 +119,7 @@ impl Piece {
             [[0, 1, 0, 0], [1, 1, 0, 0], [0, 1, 0, 0], [0, 0, 0, 0]],
         ],
         color: BoardColor::Purple,
+        kicks: Self::NORMAL_KICKS,
     };
     pub const L: Piece = Piece {
         shapes: [
@@ -71,6 +129,7 @@ impl Piece {
             [[1, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0], [0, 0, 0, 0]],
         ],
         color: BoardColor::Orange,
+        kicks: Self::NORMAL_KICKS,
     };
     pub const J: Piece = Piece {
         shapes: [
@@ -80,6 +139,7 @@ impl Piece {
             [[0, 1, 0, 0], [0, 1, 0, 0], [1, 1, 0, 0], [0, 0, 0, 0]],
         ],
         color: BoardColor::DarkBlue,
+        kicks: Self::NORMAL_KICKS,
     };
 
     pub const ALL: [&'static Piece; 7] = [

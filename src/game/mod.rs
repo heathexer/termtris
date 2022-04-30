@@ -1,16 +1,23 @@
-pub mod board;
-pub mod colors;
-pub mod piece;
+mod board;
+mod colors;
+mod piece;
+mod score;
 
 use tui::{
     text::{Span, Spans},
     widgets::Paragraph,
 };
 
-use self::{board::Board, colors::BoardColor, piece::Piece};
+use self::{
+    board::Board,
+    colors::BoardColor,
+    piece::Piece,
+    score::{Score, ScoreEvent},
+};
 
 pub struct Game<'a> {
     board: Board,
+    score: Score,
     piece_bag: Vec<&'a Piece>,
     cur_piece: &'a Piece,
     next_piece: &'a Piece,
@@ -28,6 +35,7 @@ impl<'a> Game<'a> {
 
     pub fn new() -> Self {
         let board = Board([[BoardColor::Empty; Game::WIDTH]; Game::HEIGHT]);
+        let score = Score::new();
         let mut piece_bag = Vec::from(Piece::random_bag());
         let cur_piece = piece_bag.pop().unwrap();
         let next_piece = piece_bag.pop().unwrap();
@@ -39,6 +47,7 @@ impl<'a> Game<'a> {
 
         let mut game = Game {
             board,
+            score,
             cur_piece,
             next_piece,
             hold_piece,
@@ -79,6 +88,13 @@ impl<'a> Game<'a> {
         }
 
         board_copy.into()
+    }
+
+    pub fn get_score_paragraph(&self) -> Paragraph<'a> {
+        Paragraph::new(Spans::from(Span::raw(format!(
+            "Score: {}",
+            self.score.score
+        ))))
     }
 
     pub fn next_piece_paragraph(&self) -> Paragraph<'a> {
@@ -126,23 +142,17 @@ impl<'a> Game<'a> {
 
     pub fn rotate_left(&mut self) {
         let new_rotation = (self.cur_rotation + 3) % 4;
-        if self.try_move(
-            (self.piece_offset.0 as isize, self.piece_offset.1 as isize),
-            new_rotation,
-        ) {
-            self.cur_rotation = new_rotation;
-        }
+
+        self.try_rotate_with_kick(new_rotation);
+
         self.update_ghost_position();
     }
 
     pub fn rotate_right(&mut self) {
         let new_rotation = (self.cur_rotation + 1) % 4;
-        if self.try_move(
-            (self.piece_offset.0 as isize, self.piece_offset.1 as isize),
-            new_rotation,
-        ) {
-            self.cur_rotation = new_rotation;
-        }
+
+        self.try_rotate_with_kick(new_rotation);
+
         self.update_ghost_position();
     }
 
@@ -166,6 +176,23 @@ impl<'a> Game<'a> {
         }
 
         self.can_hold = false;
+    }
+
+    fn try_rotate_with_kick(&mut self, new_rotation: u8) {
+        if self.try_move(self.piece_offset, new_rotation) {
+            self.cur_rotation = new_rotation;
+            return;
+        }
+
+        let mut new_offset;
+        for (j, i) in self.cur_piece.kicks[self.cur_rotation as usize][new_rotation as usize] {
+            new_offset = (self.piece_offset.0 + i, self.piece_offset.1 + j);
+            if self.try_move(new_offset, new_rotation) {
+                self.piece_offset = new_offset;
+                self.cur_rotation = new_rotation;
+                return;
+            }
+        }
     }
 
     fn reset_piece(&mut self, use_next_piece: bool) {
@@ -212,13 +239,27 @@ impl<'a> Game<'a> {
 
     fn clear_lines(&mut self) {
         let mut new_board = self.board.clone();
+        let mut n_lines: u8 = 0;
 
         for i in 0..Game::HEIGHT {
             while Self::is_line_full(&new_board.0[i]) {
                 new_board.0[i] = [BoardColor::Empty; Game::WIDTH];
                 new_board.0.copy_within((i + 1).., i);
+                n_lines += 1;
             }
         }
+
+        // Send score event
+        match n_lines {
+            0 => self.score.do_event(ScoreEvent::EndCombo),
+            1 => self.score.do_event(ScoreEvent::Single),
+            2 => self.score.do_event(ScoreEvent::Double),
+            3 => self.score.do_event(ScoreEvent::Triple),
+            4 => self.score.do_event(ScoreEvent::Tetris),
+            _ => {}
+        }
+
+        self.score.do_event(ScoreEvent::EndTurn);
 
         self.board = new_board;
     }

@@ -1,6 +1,5 @@
 use rand::seq::SliceRandom;
 use tui::{
-    style::{Color, Style},
     text::{Span, Spans},
     widgets::Paragraph,
 };
@@ -16,7 +15,7 @@ pub struct Piece {
 //     L,
 // }
 
-use super::colors::BoardColor;
+use super::colors::{self, BoardColor};
 
 impl Piece {
     pub const O: Piece = Piece {
@@ -113,19 +112,7 @@ impl<'a> Into<Paragraph<'a>> for &Piece {
                 // Only draw the middle two columns, always covers every square of pieces in orientation 1
                 if 0 < i && i < 3 {
                     text_row.push(if *cell != 0 {
-                        Span::styled(
-                            "██",
-                            Style::default().fg(match self.color {
-                                BoardColor::LightBlue => Color::Cyan,
-                                BoardColor::DarkBlue => Color::Blue,
-                                BoardColor::Red => Color::Red,
-                                BoardColor::Purple => Color::Magenta,
-                                BoardColor::Orange => Color::LightRed,
-                                BoardColor::Green => Color::Green,
-                                BoardColor::Yellow => Color::Yellow,
-                                BoardColor::Empty => panic!(),
-                            }),
-                        )
+                        colors::cell_to_span("██", self.color)
                     } else {
                         Span::raw("  ")
                     });

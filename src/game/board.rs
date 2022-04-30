@@ -1,7 +1,9 @@
-use super::{colors::BoardColor, Game};
+use super::{
+    colors::{self, BoardColor},
+    Game,
+};
 
 use tui::{
-    style::{Color, Style},
     text::{Span, Spans},
     widgets::Paragraph,
 };
@@ -18,20 +20,8 @@ impl<'a> Into<Paragraph<'a>> for Board {
 
                 row.iter().for_each(|cell| {
                     text_row.push(match *cell {
-                        BoardColor::Empty => Span::raw("  "),
-                        color => Span::styled(
-                            "██",
-                            Style::default().fg(match color {
-                                BoardColor::LightBlue => Color::Cyan,
-                                BoardColor::DarkBlue => Color::Blue,
-                                BoardColor::Red => Color::Red,
-                                BoardColor::Purple => Color::Magenta,
-                                BoardColor::Orange => Color::LightRed,
-                                BoardColor::Green => Color::Green,
-                                BoardColor::Yellow => Color::Yellow,
-                                BoardColor::Empty => panic!(),
-                            }),
-                        ),
+                        BoardColor::Empty => colors::cell_to_span("  ", BoardColor::Empty),
+                        color => colors::cell_to_span("██", color),
                     });
                 });
 

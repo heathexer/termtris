@@ -69,7 +69,7 @@ where
 
     let info_chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Ratio(1, 3), Constraint::Ratio(2, 3)].as_ref())
+        .constraints([Constraint::Ratio(2, 5), Constraint::Ratio(3, 5)].as_ref())
         .split(info_rect);
     let score_rect = info_chunks[0];
     let help_rect = info_chunks[1];
@@ -215,7 +215,8 @@ where
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .style(Style::default().fg(Color::White)),
+                .style(Style::default().fg(Color::White))
+                .title("Score"),
         )
         .alignment(Alignment::Left)
         .style(Style::default().fg(Color::Green));

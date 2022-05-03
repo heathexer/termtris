@@ -4,6 +4,7 @@ mod piece;
 mod score;
 
 use tui::{
+    style::{Color, Modifier, Style},
     text::{Span, Spans},
     widgets::Paragraph,
 };
@@ -92,11 +93,41 @@ impl<'a> Game<'a> {
     }
 
     pub fn get_score_paragraph(&self) -> Paragraph<'a> {
-        Paragraph::new(Spans::from(Span::raw(format!("{}", self.score.score))))
+        Paragraph::new(vec![
+            // Blank line for spacing
+            Spans::from(Span::raw("")),
+            // Main score line
+            Spans::from(Span::styled(
+                format!(" {}", self.score.score),
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::White),
+            )),
+            // Last turn score line
+            Spans::from(Span::styled(
+                format!(" +{}", self.score.last_turn_score()),
+                Style::default()
+                    .add_modifier(Modifier::ITALIC)
+                    .fg(Color::Gray),
+            )),
+            // Last turn event text
+            Spans::from(Span::styled(
+                format!(" {}", self.score.last_turn_text()),
+                Style::default().fg(Color::Gray),
+            )),
+            // Number of lines
+            Spans::from(Span::styled(
+                format!(" Lines: {}", self.score.lines()),
+                Style::default().fg(Color::Gray),
+            )),
+        ])
     }
 
     pub fn get_high_score_paragraph(&self) -> Paragraph<'a> {
-        Paragraph::new(Spans::from(Span::raw(format!("{}", self.score.high_score))))
+        Paragraph::new(Spans::from(Span::raw(format!(
+            "{}",
+            self.score.high_score()
+        ))))
     }
 
     pub fn next_pieces_paragraph(&self) -> Paragraph<'a> {
@@ -229,6 +260,7 @@ impl<'a> Game<'a> {
         // Lose condition
         if !self.try_move(self.piece_offset, self.cur_rotation) {
             self.board.reset();
+            self.score.save_and_reset_score();
         }
 
         self.update_ghost_position();

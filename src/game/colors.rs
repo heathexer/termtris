@@ -18,14 +18,14 @@ pub enum BoardColor {
 
 pub fn cell_to_span(content: &str, color: BoardColor) -> Span {
     let color = match color {
-        BoardColor::Ghost => Color::LightYellow,
-        BoardColor::LightBlue => Color::Cyan,
-        BoardColor::DarkBlue => Color::Blue,
-        BoardColor::Red => Color::Red,
-        BoardColor::Purple => Color::Magenta,
-        BoardColor::Orange => Color::LightRed,
-        BoardColor::Green => Color::Green,
-        BoardColor::Yellow => Color::Yellow,
+        BoardColor::Ghost => Color::Rgb(128, 128, 128),
+        BoardColor::LightBlue => Color::Rgb(60, 160, 160),
+        BoardColor::DarkBlue => Color::Rgb(60, 60, 200),
+        BoardColor::Red => Color::Rgb(160, 60, 60),
+        BoardColor::Purple => Color::Rgb(180, 60, 180),
+        BoardColor::Orange => Color::Rgb(203, 80, 60),
+        BoardColor::Green => Color::Rgb(60, 160, 60),
+        BoardColor::Yellow => Color::Rgb(200, 150, 60),
         BoardColor::Empty => {
             return Span::raw(content);
         }

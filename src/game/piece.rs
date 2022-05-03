@@ -1,8 +1,7 @@
 use rand::seq::SliceRandom;
 use tui::{
     style::{Color, Style},
-    text::{Span, Spans, Text},
-    widgets::Paragraph,
+    text::{Span, Spans},
 };
 
 #[derive(Clone, Eq, PartialEq)]

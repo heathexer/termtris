@@ -62,6 +62,10 @@ impl<'a> App<'a> {
                     self.game.hard_drop();
                     AppReturn::Continue
                 }
+                Action::SoftDrop => {
+                    self.game.soft_drop();
+                    AppReturn::Continue
+                }
                 Action::Hold => {
                     self.game.hold();
                     AppReturn::Continue

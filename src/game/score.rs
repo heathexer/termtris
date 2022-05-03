@@ -10,12 +10,13 @@ pub enum ScoreEvent {
     Double,
     Triple,
     Tetris,
-    SoftDrop(u8),
-    HardDrop(u8),
+    SoftDrop(isize),
+    HardDrop(isize),
 }
 
 pub struct Score {
     pub score: u32,
+    pub high_score: u32,
     lines: u32,
     level: u8,
     // speed: Duration,
@@ -28,6 +29,7 @@ impl<'a> Score {
     pub fn new() -> Self {
         Score {
             score: 0,
+            high_score: 500,
             lines: 0,
             level: 1,
             turn_stack: Vec::new(),

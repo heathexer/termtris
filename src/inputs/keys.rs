@@ -24,10 +24,10 @@ impl Display for BaseKey {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             BaseKey::None => write!(f, ""),
-            BaseKey::Char(' ') => write!(f, "space"),
-            BaseKey::Char(c) => write!(f, "{}", c.to_uppercase()),
-            BaseKey::Enter => write!(f, "enter"),
-            BaseKey::Tab => write!(f, "tab"),
+            BaseKey::Char(' ') => write!(f, "Space"),
+            BaseKey::Char(c) => write!(f, "{}", c),
+            BaseKey::Enter => write!(f, "Enter"),
+            BaseKey::Tab => write!(f, "Tab"),
             BaseKey::Left => write!(f, "←"),
             BaseKey::Right => write!(f, "→"),
             BaseKey::Up => write!(f, "↑"),
@@ -40,7 +40,7 @@ impl Display for Key {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Key::Plain(key) => write!(f, "{key}"),
-            Key::Ctrl(key) => write!(f, "^{key}"),
+            Key::Ctrl(key) => write!(f, "Ctrl+{key}"),
         }
     }
 }

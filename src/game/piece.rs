@@ -1,6 +1,7 @@
 use rand::seq::SliceRandom;
 use tui::{
-    text::{Span, Spans},
+    style::{Color, Style},
+    text::{Span, Spans, Text},
     widgets::Paragraph,
 };
 
@@ -160,28 +161,62 @@ impl Piece {
     }
 }
 
-impl<'a> Into<Paragraph<'a>> for &Piece {
-    fn into(self) -> Paragraph<'a> {
+impl<'a> Into<Vec<Spans<'a>>> for &Piece {
+    fn into(self) -> Vec<Spans<'a>> {
         let mut text = Vec::new();
-        text.push(Spans::from(Span::raw("")));
+        text.push(Spans::from(Span::styled(
+            "",
+            Style::default().fg(Color::Gray),
+        )));
 
-        self.shapes[1].iter().for_each(|row| {
+        self.shapes[0].iter().take(2).for_each(|row| {
             let mut text_row = Vec::<Span>::new();
 
-            row.iter().enumerate().for_each(|(i, cell)| {
-                // Only draw the middle two columns, always covers every square of pieces in orientation 1
-                if 0 < i && i < 3 {
-                    text_row.push(if *cell != 0 {
-                        colors::cell_to_span("██", self.color)
-                    } else {
-                        Span::raw("  ")
-                    });
+            match self {
+                &Piece::O | &Piece::I => {}
+                _ => {
+                    // Add a half block of space to center odd width blocks
+                    text_row.push(Span::raw(" "));
                 }
+            }
+
+            row.iter().for_each(|cell| {
+                text_row.push(if *cell != 0 {
+                    colors::cell_to_span("██", self.color)
+                } else {
+                    Span::raw("  ")
+                });
             });
 
             text.push(Spans::from(text_row));
         });
 
-        Paragraph::new(text)
+        text
     }
 }
+
+// impl<'a> Into<Paragraph<'a>> for &Piece {
+//     fn into(self) -> Paragraph<'a> {
+//         let mut text = Vec::new();
+//         text.push(Spans::from(Span::raw("")));
+
+//         self.shapes[0].iter().for_each(|row| {
+//             let mut text_row = Vec::<Span>::new();
+
+//             row.iter().enumerate().for_each(|(i, cell)| {
+//                 // Only draw the middle two columns, always covers every square of pieces in orientation 1
+//                 // if 0 < i && i < 3 {
+//                 text_row.push(if *cell != 0 {
+//                     colors::cell_to_span("██", self.color)
+//                 } else {
+//                     Span::raw("  ")
+//                 });
+//                 // }
+//             });
+
+//             text.push(Spans::from(text_row));
+//         });
+
+//         Paragraph::new(text)
+//     }
+// }

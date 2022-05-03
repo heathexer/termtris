@@ -37,6 +37,7 @@ impl<'a> Game<'a> {
         let board = Board([[BoardColor::Empty; Game::WIDTH]; Game::HEIGHT]);
         let score = Score::new();
         let mut piece_bag = Vec::from(Piece::random_bag());
+        // piece_bag.append(&mut Vec::from(Piece::random_bag()));
         let cur_piece = piece_bag.pop().unwrap();
         let next_piece = piece_bag.pop().unwrap();
         let hold_piece = None;
@@ -91,19 +92,28 @@ impl<'a> Game<'a> {
     }
 
     pub fn get_score_paragraph(&self) -> Paragraph<'a> {
-        Paragraph::new(Spans::from(Span::raw(format!(
-            "Score: {}",
-            self.score.score
-        ))))
+        Paragraph::new(Spans::from(Span::raw(format!("{}", self.score.score))))
     }
 
-    pub fn next_piece_paragraph(&self) -> Paragraph<'a> {
-        self.next_piece.into()
+    pub fn get_high_score_paragraph(&self) -> Paragraph<'a> {
+        Paragraph::new(Spans::from(Span::raw(format!("{}", self.score.high_score))))
+    }
+
+    pub fn next_pieces_paragraph(&self) -> Paragraph<'a> {
+        let mut spans = Vec::<Spans>::new();
+        spans.append(&mut self.next_piece.into());
+
+        for piece in self.piece_bag.iter().rev().take(5) {
+            spans.append(&mut piece.to_owned().into());
+        }
+
+        Paragraph::new(spans)
     }
 
     pub fn hold_piece_paragraph(&self) -> Paragraph<'a> {
         if let Some(piece) = self.hold_piece {
-            piece.into()
+            let spans: Vec<Spans> = piece.into();
+            Paragraph::new(spans)
         } else {
             Paragraph::new(Spans::from(Span::raw("")))
         }
@@ -129,6 +139,11 @@ impl<'a> Game<'a> {
             self.piece_offset.1 = new_offset.1;
         }
         self.update_ghost_position();
+    }
+
+    pub fn soft_drop(&mut self) {
+        self.move_down();
+        self.score.do_event(ScoreEvent::SoftDrop(1));
     }
 
     pub fn move_down(&mut self) {
@@ -157,6 +172,9 @@ impl<'a> Game<'a> {
     }
 
     pub fn hard_drop(&mut self) {
+        let dist = self.piece_offset.0 - self.ghost_offset.0;
+        self.score.do_event(ScoreEvent::HardDrop(dist));
+
         self.piece_offset = self.ghost_offset;
         self.lock_piece();
     }
@@ -199,12 +217,10 @@ impl<'a> Game<'a> {
         if use_next_piece {
             self.cur_piece = self.next_piece;
 
-            if let Some(next_piece) = self.piece_bag.pop() {
-                self.next_piece = next_piece;
-            } else {
+            if self.piece_bag.len() < 7 {
                 self.piece_bag.append(&mut Vec::from(Piece::random_bag()));
-                self.next_piece = self.piece_bag.pop().unwrap();
             }
+            self.next_piece = self.piece_bag.pop().unwrap();
         }
 
         self.piece_offset = (21, 3);

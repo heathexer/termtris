@@ -10,19 +10,21 @@ pub enum Action {
     ShiftLeft,
     ShiftRight,
     HardDrop,
+    SoftDrop,
     Hold,
 }
 
 impl Action {
     // Iterator over all available actions
     pub fn iterator() -> std::slice::Iter<'static, Action> {
-        static ACTIONS: [Action; 7] = [
+        static ACTIONS: [Action; 8] = [
             Action::Quit,
             Action::RotateLeft,
             Action::RotateRight,
             Action::ShiftLeft,
             Action::ShiftRight,
             Action::HardDrop,
+            Action::SoftDrop,
             Action::Hold,
         ];
         ACTIONS.iter()
@@ -32,14 +34,15 @@ impl Action {
     pub fn keys(&self) -> Vec<Key> {
         match self {
             Action::Quit => vec![Key::Ctrl(BaseKey::Char('c'))],
-            Action::ShiftLeft => vec![Key::Plain(BaseKey::Char('a')), Key::Plain(BaseKey::Left)],
-            Action::ShiftRight => vec![Key::Plain(BaseKey::Char('d')), Key::Plain(BaseKey::Right)],
+            Action::ShiftLeft => vec![Key::Plain(BaseKey::Left), Key::Plain(BaseKey::Char('a'))],
+            Action::ShiftRight => vec![Key::Plain(BaseKey::Right), Key::Plain(BaseKey::Char('d'))],
             Action::RotateLeft => vec![
                 Key::Plain(BaseKey::Char('q')),
                 Key::Plain(BaseKey::Char(',')),
             ],
             Action::RotateRight => vec![Key::Plain(BaseKey::Char('e')), Key::Plain(BaseKey::Up)],
             Action::HardDrop => vec![Key::Plain(BaseKey::Char(' '))],
+            Action::SoftDrop => vec![Key::Plain(BaseKey::Down)],
             Action::Hold => vec![Key::Plain(BaseKey::Char('c'))],
         }
     }
@@ -54,6 +57,7 @@ impl Display for Action {
             Action::ShiftLeft => write!(f, "Move Left"),
             Action::ShiftRight => write!(f, "Move Right"),
             Action::HardDrop => write!(f, "Hard Drop"),
+            Action::SoftDrop => write!(f, "Soft Drop"),
             Action::Hold => write!(f, "Hold"),
         }
     }

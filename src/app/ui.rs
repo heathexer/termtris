@@ -89,18 +89,6 @@ where
     draw_high_score(f, high_score_rect, &app.game);
 }
 
-fn draw_title<'a>() -> Paragraph<'a> {
-    Paragraph::new("TERMTRIS")
-        .style(Style::default().fg(Color::LightCyan))
-        .alignment(Alignment::Center)
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .style(Style::default().fg(Color::White))
-                .border_type(BorderType::Plain),
-        )
-}
-
 fn draw_help<'a>() -> Table<'a> {
     let key_style = Style::default().fg(Color::Gray);
     let msg_style = Style::default()

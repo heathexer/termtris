@@ -1,18 +1,30 @@
 use self::ScoreEvent::*;
 use microkv::MicroKV;
+use tui::style::Color;
 
 #[derive(Eq, PartialEq, Clone, Copy)]
 pub enum ScoreEvent {
+    LineClear(Lines),
+    TSpin(TSpins),
+    SoftDrop(isize),
+    HardDrop(isize),
     EndTurn,
-    EndCombo,
+}
+
+#[derive(Eq, PartialEq, Clone, Copy)]
+pub enum Lines {
+    None,
     Single,
-    MiniTSpin,
-    TSpin,
     Double,
     Triple,
     Tetris,
-    SoftDrop(isize),
-    HardDrop(isize),
+}
+
+#[derive(Eq, PartialEq, Clone, Copy)]
+pub enum TSpins {
+    None,
+    MiniTSpin,
+    TSpin,
 }
 
 pub struct Score {
@@ -22,10 +34,13 @@ pub struct Score {
     lines: u32,
     level: u8,
     // speed: Duration,
-    turn_stack: Vec<ScoreEvent>,
-    last_turn_stack: Vec<ScoreEvent>,
+    combo: bool,
+    turn: (TSpins, Lines),
+    turn_score: u32,
+    last_turn: (TSpins, Lines),
     last_turn_score: u32,
     last_turn_text: String,
+    text_color: Color,
 }
 
 impl<'a> Score {
@@ -43,10 +58,13 @@ impl<'a> Score {
             high_score_db,
             lines: 0,
             level: 1,
-            turn_stack: Vec::new(),
-            last_turn_stack: Vec::new(),
+            combo: false,
+            turn_score: 0,
             last_turn_score: 0,
             last_turn_text: String::new(),
+            turn: (TSpins::None, Lines::None),
+            last_turn: (TSpins::None, Lines::None),
+            text_color: Color::Gray,
         }
     }
 
@@ -56,6 +74,10 @@ impl<'a> Score {
 
     pub fn last_turn_text(&self) -> &str {
         &self.last_turn_text
+    }
+
+    pub fn text_color(&self) -> Color {
+        self.text_color
     }
 
     pub fn high_score(&self) -> u32 {
@@ -77,53 +99,92 @@ impl<'a> Score {
 
     pub fn do_event(&mut self, event: ScoreEvent) {
         match event {
-            ScoreEvent::EndTurn => {
+            LineClear(lines) => self.turn.1 = lines,
+            TSpin(spin) => self.turn.0 = spin,
+            SoftDrop(len) => self.turn_score += len as u32,
+            HardDrop(len) => self.turn_score += 2 * len as u32,
+            EndTurn => {
                 // Do score calculations
-                let mut turn_score = 0_u32;
+                self.last_turn_text = String::new();
 
-                if self.turn_stack.contains(&Single) {
-                    turn_score += 100 * self.level as u32;
-                    self.lines += 1;
-                }
-
-                if self.turn_stack.contains(&MiniTSpin) {
-                    turn_score += 100 * self.level as u32;
-                }
-
-                if self.turn_stack.contains(&Double) {
-                    turn_score += 300 * self.level as u32;
-                    self.lines += 2;
-                }
-
-                if self.turn_stack.contains(&Triple) {
-                    turn_score += 500 * self.level as u32;
-                    self.lines += 3;
-                }
-
-                if self.turn_stack.contains(&Tetris) {
-                    turn_score += 800 * self.level as u32;
+                match self.turn {
+                    (TSpins::None, Lines::Single) => {
+                        // Single
+                        self.turn_score += 100 * self.level as u32;
+                        self.last_turn_text = "Single".to_string();
+                    }
+                    (TSpins::MiniTSpin, Lines::None) => {
+                        // Mini T-Spin
+                        self.turn_score += 100 * self.level as u32;
+                        self.last_turn_text = "Mini T-Spin".to_string();
+                    }
+                    (TSpins::MiniTSpin, Lines::Single) => {
+                        // Mini T-Spin Single
+                        self.turn_score += 200 * self.level as u32;
+                        self.last_turn_text = "Mini T-Spin Single".to_string();
+                    }
+                    (TSpins::None, Lines::Double) => {
+                        // Double
+                        self.turn_score += 300 * self.level as u32;
+                        self.last_turn_text = "Double".to_string();
+                    }
+                    (TSpins::MiniTSpin, Lines::Double) => {
+                        // Mini T-Spin Double
+                        self.turn_score += 400 * self.level as u32;
+                        self.last_turn_text = "Mini T-Spin Double".to_string();
+                    }
+                    (TSpins::TSpin, Lines::None) => {
+                        // T-Spin
+                        self.turn_score += 400 * self.level as u32;
+                        self.last_turn_text = "T-Spin".to_string();
+                    }
+                    (TSpins::None, Lines::Triple) | (TSpins::MiniTSpin, Lines::Triple) => {
+                        // Triple
+                        self.turn_score += 500 * self.level as u32;
+                        self.last_turn_text = "Triple".to_string();
+                    }
+                    (TSpins::None, Lines::Tetris)
+                    | (TSpins::MiniTSpin, Lines::Tetris)
+                    | (TSpins::TSpin, Lines::Tetris) => {
+                        // Tetris
+                        self.turn_score += 800 * self.level as u32;
+                        self.last_turn_text = "Tetris".to_string();
+                    }
+                    (TSpins::TSpin, Lines::Single) => {
+                        // T-Spin Single
+                        self.turn_score += 800 * self.level as u32;
+                        self.last_turn_text = "T-Spin Single".to_string();
+                    }
+                    (TSpins::TSpin, Lines::Double) => {
+                        // T-Spin Double
+                        self.turn_score += 1200 * self.level as u32;
+                        self.last_turn_text = "T-Spin Double".to_string();
+                    }
+                    (TSpins::TSpin, Lines::Triple) => {
+                        // T-Spin Triple
+                        self.turn_score += 1600 * self.level as u32;
+                        self.last_turn_text = "T-Spin Triple".to_string();
+                    }
+                    (TSpins::None, Lines::None) => {}
                 }
 
                 // Combo points
-                if !self.last_turn_stack.contains(&EndCombo) && !self.turn_stack.contains(&EndCombo)
+                if self.last_turn != (TSpins::None, Lines::None)
+                    && self.turn != (TSpins::None, Lines::None)
                 {
-                    turn_score += 50 * self.level as u32;
+                    self.turn_score += 50 * self.level as u32;
+                    self.text_color = Color::LightRed;
+                } else {
+                    self.text_color = Color::Gray;
                 }
 
-                // Drop points
-                self.turn_stack.iter().for_each(|event| match event {
-                    SoftDrop(len) => turn_score += *len as u32,
-                    HardDrop(len) => turn_score += 2 * *len as u32,
-                    _ => {}
-                });
+                self.last_turn = self.turn;
+                self.turn = (TSpins::None, Lines::None);
 
-                self.score += turn_score;
-                self.last_turn_score = turn_score;
-
-                self.last_turn_stack = self.turn_stack.clone();
-                self.turn_stack = Vec::new();
+                self.score += self.turn_score;
+                self.last_turn_score = self.turn_score;
+                self.turn_score = 0;
             }
-            event => self.turn_stack.push(event),
         }
     }
 }

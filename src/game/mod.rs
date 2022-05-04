@@ -13,7 +13,7 @@ use self::{
     board::Board,
     colors::BoardColor,
     piece::Piece,
-    score::{Score, ScoreEvent},
+    score::{Lines, Score, ScoreEvent, TSpins},
 };
 
 pub struct Game<'a> {
@@ -113,7 +113,7 @@ impl<'a> Game<'a> {
             // Last turn event text
             Spans::from(Span::styled(
                 format!(" {}", self.score.last_turn_text()),
-                Style::default().fg(Color::Gray),
+                Style::default().fg(self.score.text_color()),
             )),
             // Number of lines
             Spans::from(Span::styled(
@@ -299,11 +299,10 @@ impl<'a> Game<'a> {
 
         // Send score event
         match n_lines {
-            0 => self.score.do_event(ScoreEvent::EndCombo),
-            1 => self.score.do_event(ScoreEvent::Single),
-            2 => self.score.do_event(ScoreEvent::Double),
-            3 => self.score.do_event(ScoreEvent::Triple),
-            4 => self.score.do_event(ScoreEvent::Tetris),
+            1 => self.score.do_event(ScoreEvent::LineClear(Lines::Single)),
+            2 => self.score.do_event(ScoreEvent::LineClear(Lines::Double)),
+            3 => self.score.do_event(ScoreEvent::LineClear(Lines::Triple)),
+            4 => self.score.do_event(ScoreEvent::LineClear(Lines::Tetris)),
             _ => {}
         }
 

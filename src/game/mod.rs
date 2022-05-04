@@ -227,9 +227,24 @@ impl<'a> Game<'a> {
         self.can_hold = false;
     }
 
+    fn is_tspin(&self) -> bool {
+        let n_corners = self.cell_occupied(self.piece_offset.0, self.piece_offset.1) as u8
+            + self.cell_occupied(self.piece_offset.0 - 2, self.piece_offset.1) as u8
+            + self.cell_occupied(self.piece_offset.0, self.piece_offset.1 + 2) as u8
+            + self.cell_occupied(self.piece_offset.0 - 2, self.piece_offset.1 + 2) as u8;
+
+        n_corners >= 3
+    }
+
     fn try_rotate_with_kick(&mut self, new_rotation: u8) {
         if self.try_move(self.piece_offset, new_rotation) {
             self.cur_rotation = new_rotation;
+
+            // Check for T-Spin
+            if *self.cur_piece == Piece::T && self.is_tspin() {
+                self.score.do_event(ScoreEvent::TSpin(TSpins::TSpin));
+            }
+
             return;
         }
 
@@ -239,6 +254,12 @@ impl<'a> Game<'a> {
             if self.try_move(new_offset, new_rotation) {
                 self.piece_offset = new_offset;
                 self.cur_rotation = new_rotation;
+
+                // Check for Mini T-Spin
+                if *self.cur_piece == Piece::T && self.is_tspin() {
+                    self.score.do_event(ScoreEvent::TSpin(TSpins::MiniTSpin));
+                }
+
                 return;
             }
         }
@@ -311,18 +332,20 @@ impl<'a> Game<'a> {
         self.board = new_board;
     }
 
+    fn cell_occupied(&self, row_idx: isize, col_idx: isize) -> bool {
+        row_idx < 0
+            || row_idx >= Game::HEIGHT as isize
+            || col_idx < 0
+            || col_idx >= Game::WIDTH as isize
+            || self.board.0[row_idx as usize][col_idx as usize] != BoardColor::Empty
+    }
+
     fn try_move(&self, offset: (isize, isize), rotation: u8) -> bool {
         for (i, row) in self.cur_piece.shapes[rotation as usize].iter().enumerate() {
             let row_idx = offset.0 - i as isize;
             for (j, cell) in row.iter().enumerate() {
                 let col_idx = offset.1 + j as isize;
-                if *cell != 0
-                    && (row_idx < 0
-                        || row_idx >= Game::HEIGHT as isize
-                        || col_idx < 0
-                        || col_idx >= Game::WIDTH as isize
-                        || self.board.0[row_idx as usize][col_idx as usize] != BoardColor::Empty)
-                {
+                if *cell != 0 && self.cell_occupied(row_idx, col_idx) {
                     return false;
                 }
             }

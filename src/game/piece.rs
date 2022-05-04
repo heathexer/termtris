@@ -157,6 +157,17 @@ impl Piece {
         permutation.shuffle(&mut rand::thread_rng());
 
         permutation
+
+        // Uncomment for all Ts for debug purposes
+        // [
+        //     &Piece::T,
+        //     &Piece::T,
+        //     &Piece::T,
+        //     &Piece::T,
+        //     &Piece::T,
+        //     &Piece::T,
+        //     &Piece::T,
+        // ]
     }
 }
 
@@ -193,29 +204,3 @@ impl<'a> Into<Vec<Spans<'a>>> for &Piece {
         text
     }
 }
-
-// impl<'a> Into<Paragraph<'a>> for &Piece {
-//     fn into(self) -> Paragraph<'a> {
-//         let mut text = Vec::new();
-//         text.push(Spans::from(Span::raw("")));
-
-//         self.shapes[0].iter().for_each(|row| {
-//             let mut text_row = Vec::<Span>::new();
-
-//             row.iter().enumerate().for_each(|(i, cell)| {
-//                 // Only draw the middle two columns, always covers every square of pieces in orientation 1
-//                 // if 0 < i && i < 3 {
-//                 text_row.push(if *cell != 0 {
-//                     colors::cell_to_span("██", self.color)
-//                 } else {
-//                     Span::raw("  ")
-//                 });
-//                 // }
-//             });
-
-//             text.push(Spans::from(text_row));
-//         });
-
-//         Paragraph::new(text)
-//     }
-// }

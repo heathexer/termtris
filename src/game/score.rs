@@ -34,7 +34,6 @@ pub struct Score {
     lines: u32,
     level: u8,
     // speed: Duration,
-    combo: bool,
     turn: (TSpins, Lines),
     turn_score: u32,
     last_turn: (TSpins, Lines),
@@ -58,7 +57,6 @@ impl<'a> Score {
             high_score_db,
             lines: 0,
             level: 1,
-            combo: false,
             turn_score: 0,
             last_turn_score: 0,
             last_turn_text: String::new(),
@@ -176,6 +174,15 @@ impl<'a> Score {
                     self.text_color = Color::LightRed;
                 } else {
                     self.text_color = Color::Gray;
+                }
+
+                // Count lines
+                match self.turn.1 {
+                    Lines::Single => self.lines += 1,
+                    Lines::Double => self.lines += 3,
+                    Lines::Triple => self.lines += 5,
+                    Lines::Tetris => self.lines += 8,
+                    Lines::None => {}
                 }
 
                 self.last_turn = self.turn;

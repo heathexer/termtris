@@ -19,8 +19,8 @@ impl Events {
         let event_tx = tx.clone();
         thread::spawn(move || loop {
             if event::poll(tick_rate).unwrap() {
-                if let event::Event::Key(key) = event::read().unwrap() {
-                    let key = key.into();
+                if let event::Event::Key(key_event) = event::read().unwrap() {
+                    let key = key_event.into();
                     event_tx.send(InputEvent::Input(key)).unwrap();
                 }
             } else {

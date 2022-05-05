@@ -13,13 +13,7 @@ pub fn draw<B>(f: &mut Frame<B>, app: &mut App)
 where
     B: Backend,
 {
-    // let chunks = Layout::default()
-    //     .direction(Direction::Vertical)
-    //     .constraints([Constraint::Length(3), Constraint::Min(10)].as_ref())
-    //     .split(f.size());
-    // let title_rect = chunks[0];
-    // let body_rect = chunks[1];
-
+    // Center the game vertically
     let tmp_rect = Layout::default()
         .direction(Direction::Vertical)
         .vertical_margin((f.size().height - Game::DISPLAY_HEIGHT as u16 - 2) / 2)
@@ -32,6 +26,7 @@ where
             .as_ref(),
         )
         .split(f.size())[1];
+
     let main_chunks = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(
@@ -57,36 +52,42 @@ where
             [
                 Constraint::Max(0),
                 Constraint::Length(6),
+                Constraint::Length(3),
+                Constraint::Length(3),
                 Constraint::Min(0),
                 Constraint::Length(4),
+                Constraint::Length(3),
                 Constraint::Max(0),
             ]
             .as_ref(),
         )
         .split(left_panel_rect);
     let hold_block_rect = left_panel_chunks[1];
-    let high_score_rect = left_panel_chunks[3];
+    let level_rect = left_panel_chunks[2];
+    let lines_rect = left_panel_chunks[3];
+    let score_rect = left_panel_chunks[5];
+    let high_score_rect = left_panel_chunks[6];
 
     let info_chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Ratio(2, 5), Constraint::Ratio(3, 5)].as_ref())
+        .constraints([Constraint::Ratio(3, 5), Constraint::Ratio(2, 5)].as_ref())
         .split(info_rect);
-    let score_rect = info_chunks[0];
-    let help_rect = info_chunks[1];
+    let help_rect = info_chunks[0];
+    let score_log_rect = info_chunks[1];
 
-    // let title = draw_title();
-    // f.render_widget(title, title_rect);
-
-    draw_next_blocks(f, next_blocks_rect, &app.game);
-    draw_hold_block(f, hold_block_rect, &app.game);
+    draw_next_blocks(f, &next_blocks_rect, &app.game);
+    draw_hold_block(f, &hold_block_rect, &app.game);
 
     let help = draw_help();
     f.render_widget(help, help_rect);
 
-    draw_game_board(f, game_rect, &app.game);
+    draw_game_board(f, &game_rect, &app.game);
 
-    draw_score(f, score_rect, &app.game);
-    draw_high_score(f, high_score_rect, &app.game);
+    draw_score_log(f, &score_log_rect, &app.game);
+    draw_level(f, &level_rect, &app.game);
+    draw_lines(f, &lines_rect, &app.game);
+    draw_score(f, &score_rect, &app.game);
+    draw_high_score(f, &high_score_rect, &app.game);
 }
 
 fn draw_help<'a>() -> Table<'a> {
@@ -123,7 +124,7 @@ fn draw_help<'a>() -> Table<'a> {
         .column_spacing(1)
 }
 
-fn draw_next_blocks<B>(f: &mut Frame<B>, rect: Rect, game: &Game)
+fn draw_next_blocks<B>(f: &mut Frame<B>, rect: &Rect, game: &Game)
 where
     B: Backend,
 {
@@ -138,10 +139,10 @@ where
         .alignment(Alignment::Center)
         .style(Style::default().fg(Color::Red));
 
-    f.render_widget(widget, rect);
+    f.render_widget(widget, *rect);
 }
 
-fn draw_hold_block<B>(f: &mut Frame<B>, rect: Rect, game: &Game)
+fn draw_hold_block<B>(f: &mut Frame<B>, rect: &Rect, game: &Game)
 where
     B: Backend,
 {
@@ -156,10 +157,10 @@ where
         .alignment(Alignment::Center)
         .style(Style::default().fg(Color::Blue));
 
-    f.render_widget(widget, rect);
+    f.render_widget(widget, *rect);
 }
 
-fn draw_game_board<B>(f: &mut Frame<B>, rect: Rect, game: &Game)
+fn draw_game_board<B>(f: &mut Frame<B>, rect: &Rect, game: &Game)
 where
     B: Backend,
 {
@@ -173,33 +174,51 @@ where
         .alignment(Alignment::Center)
         .style(Style::default().fg(Color::Cyan));
 
-    f.render_widget(widget, rect);
+    f.render_widget(widget, *rect);
 }
 
-fn draw_high_score<B>(f: &mut Frame<B>, rect: Rect, game: &Game)
+fn draw_level<B>(f: &mut Frame<B>, rect: &Rect, game: &Game)
 where
     B: Backend,
 {
     let widget = game
-        .get_high_score_paragraph()
+        .level_paragraph()
         .block(
             Block::default()
                 .borders(Borders::ALL)
                 .style(Style::default().fg(Color::White))
-                .title("High─Score"),
+                .title("Level"),
         )
         .alignment(Alignment::Center)
         .style(Style::default().fg(Color::White));
 
-    f.render_widget(widget, rect);
+    f.render_widget(widget, *rect);
 }
 
-fn draw_score<B>(f: &mut Frame<B>, rect: Rect, game: &Game)
+fn draw_lines<B>(f: &mut Frame<B>, rect: &Rect, game: &Game)
 where
     B: Backend,
 {
     let widget = game
-        .get_score_paragraph()
+        .lines_paragraph()
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .style(Style::default().fg(Color::White))
+                .title("Lines"),
+        )
+        .alignment(Alignment::Center)
+        .style(Style::default().fg(Color::White));
+
+    f.render_widget(widget, *rect);
+}
+
+fn draw_score<B>(f: &mut Frame<B>, rect: &Rect, game: &Game)
+where
+    B: Backend,
+{
+    let widget = game
+        .score_paragraph()
         .block(
             Block::default()
                 .borders(Borders::ALL)
@@ -207,7 +226,42 @@ where
                 .title("Score"),
         )
         .alignment(Alignment::Left)
-        .style(Style::default().fg(Color::Green));
+        .style(Style::default().fg(Color::White));
 
-    f.render_widget(widget, rect);
+    f.render_widget(widget, *rect);
+}
+
+fn draw_high_score<B>(f: &mut Frame<B>, rect: &Rect, game: &Game)
+where
+    B: Backend,
+{
+    let widget = game
+        .high_score_paragraph()
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .style(Style::default().fg(Color::White))
+                .title("High─Score"),
+        )
+        .alignment(Alignment::Left)
+        .style(Style::default().fg(Color::White));
+
+    f.render_widget(widget, *rect);
+}
+
+fn draw_score_log<B>(f: &mut Frame<B>, rect: &Rect, game: &Game)
+where
+    B: Backend,
+{
+    let widget = game
+        .score_log_paragraph()
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .style(Style::default().fg(Color::White))
+                .title("Log"),
+        )
+        .alignment(Alignment::Left);
+
+    f.render_widget(widget, *rect);
 }

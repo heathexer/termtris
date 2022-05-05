@@ -1,8 +1,10 @@
 mod board;
 mod colors;
+mod level;
 mod piece;
 mod score;
 
+use std::collections::VecDeque;
 use tui::{
     style::{Color, Modifier, Style},
     text::{Span, Spans},
@@ -19,7 +21,7 @@ use self::{
 pub struct Game<'a> {
     board: Board,
     score: Score,
-    piece_bag: Vec<&'a Piece>,
+    piece_bag: VecDeque<&'a Piece>,
     cur_piece: &'a Piece,
     next_piece: &'a Piece,
     hold_piece: Option<&'a Piece>,
@@ -27,6 +29,7 @@ pub struct Game<'a> {
     cur_rotation: u8,
     piece_offset: (isize, isize),
     ghost_offset: (isize, isize),
+    score_log: VecDeque<Spans<'a>>,
 }
 
 impl<'a> Game<'a> {
@@ -37,15 +40,15 @@ impl<'a> Game<'a> {
     pub fn new() -> Self {
         let board = Board([[BoardColor::Empty; Game::WIDTH]; Game::HEIGHT]);
         let score = Score::new();
-        let mut piece_bag = Vec::from(Piece::random_bag());
-        // piece_bag.append(&mut Vec::from(Piece::random_bag()));
-        let cur_piece = piece_bag.pop().unwrap();
-        let next_piece = piece_bag.pop().unwrap();
+        let mut piece_bag = VecDeque::from(Piece::random_bag());
+        let cur_piece = piece_bag.pop_front().unwrap();
+        let next_piece = piece_bag.pop_front().unwrap();
         let hold_piece = None;
         let can_hold = true;
         let cur_rotation = 0_u8;
         let piece_offset = (0, 0);
         let ghost_offset = (0, 0);
+        let score_log = VecDeque::from(vec![Spans::from(Span::raw("-")); 7]);
 
         let mut game = Game {
             board,
@@ -58,6 +61,7 @@ impl<'a> Game<'a> {
             piece_offset,
             ghost_offset,
             piece_bag,
+            score_log,
         };
 
         game.reset_piece(false);
@@ -92,49 +96,35 @@ impl<'a> Game<'a> {
         board_copy.into()
     }
 
-    pub fn get_score_paragraph(&self) -> Paragraph<'a> {
+    pub fn score_log_paragraph(&self) -> Paragraph<'a> {
+        Paragraph::new(Vec::from(self.score_log.clone()))
+    }
+
+    pub fn score_paragraph(&self) -> Paragraph<'a> {
         Paragraph::new(vec![
-            // Blank line for spacing
-            Spans::from(Span::raw("")),
-            // Main score line
             Spans::from(Span::styled(
-                format!(" {}", self.score.score),
-                Style::default()
-                    .add_modifier(Modifier::BOLD)
-                    .fg(Color::White),
+                format!(" {}", self.score.score()),
+                Style::default().add_modifier(Modifier::BOLD),
             )),
-            // Last turn score line
             Spans::from(Span::styled(
-                format!(" +{}", self.score.last_turn_score()),
-                Style::default()
-                    .add_modifier(Modifier::ITALIC)
-                    .fg(Color::Gray),
-            )),
-            // Last turn event text
-            Spans::from(Span::styled(
-                format!(" {}", self.score.last_turn_text()),
-                Style::default().fg(self.score.text_color()),
-            )),
-            // Number of lines
-            Spans::from(Span::styled(
-                format!(" Lines: {}", self.score.lines()),
-                Style::default().fg(Color::Gray),
+                format!("+{}", self.score.last_turn_score()),
+                Style::default().add_modifier(Modifier::ITALIC),
             )),
         ])
     }
 
-    pub fn get_high_score_paragraph(&self) -> Paragraph<'a> {
-        Paragraph::new(Spans::from(Span::raw(format!(
-            "{}",
-            self.score.high_score()
-        ))))
+    pub fn high_score_paragraph(&self) -> Paragraph<'a> {
+        Paragraph::new(Spans::from(Span::styled(
+            format!(" {}", self.score.high_score()),
+            Style::default().add_modifier(Modifier::BOLD),
+        )))
     }
 
     pub fn next_pieces_paragraph(&self) -> Paragraph<'a> {
         let mut spans = Vec::<Spans>::new();
         spans.append(&mut self.next_piece.into());
 
-        for piece in self.piece_bag.iter().rev().take(5) {
+        for piece in self.piece_bag.iter().take(5) {
             spans.append(&mut piece.to_owned().into());
         }
 
@@ -147,6 +137,37 @@ impl<'a> Game<'a> {
             Paragraph::new(spans)
         } else {
             Paragraph::new(Spans::from(Span::raw("")))
+        }
+    }
+
+    pub fn level_paragraph(&self) -> Paragraph<'a> {
+        let level = self.score.level();
+        if level < 15 {
+            Paragraph::new(Spans::from(Span::styled(
+                format!("{}", self.score.level()),
+                Style::default().add_modifier(Modifier::BOLD),
+            )))
+        } else {
+            Paragraph::new(Spans::from(Span::styled(
+                format!("{}", self.score.level()),
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::LightRed),
+            )))
+        }
+    }
+
+    pub fn lines_paragraph(&self) -> Paragraph<'a> {
+        if self.score.level() >= 15 {
+            Paragraph::new(Spans::from(Span::styled(
+                format!("{}", self.score.lines()),
+                Style::default().add_modifier(Modifier::BOLD),
+            )))
+        } else {
+            Paragraph::new(Spans::from(Span::styled(
+                format!("{}->{}", self.score.lines(), self.score.lines_goal()),
+                Style::default().add_modifier(Modifier::BOLD),
+            )))
         }
     }
 
@@ -270,9 +291,10 @@ impl<'a> Game<'a> {
             self.cur_piece = self.next_piece;
 
             if self.piece_bag.len() < 7 {
-                self.piece_bag.append(&mut Vec::from(Piece::random_bag()));
+                self.piece_bag
+                    .append(&mut VecDeque::from(Piece::random_bag()));
             }
-            self.next_piece = self.piece_bag.pop().unwrap();
+            self.next_piece = self.piece_bag.pop_front().unwrap();
         }
 
         self.piece_offset = (21, 3);
@@ -332,6 +354,16 @@ impl<'a> Game<'a> {
         self.board = new_board;
     }
 
+    fn update_score_log(&mut self) {
+        while self.score_log.len() >= 7 {
+            self.score_log.pop_front();
+        }
+        self.score_log.push_back(Spans::from(Span::styled(
+            self.score.last_turn_text().to_string(),
+            Style::default().fg(self.score.text_color()),
+        )));
+    }
+
     fn cell_occupied(&self, row_idx: isize, col_idx: isize) -> bool {
         row_idx < 0
             || row_idx >= Game::HEIGHT as isize
@@ -370,6 +402,8 @@ impl<'a> Game<'a> {
         self.clear_lines();
 
         self.reset_piece(true);
+
+        self.update_score_log();
 
         self.can_hold = true;
     }

@@ -1,4 +1,5 @@
 use self::ScoreEvent::*;
+use super::level::Level;
 use microkv::MicroKV;
 use tui::style::Color;
 
@@ -29,11 +30,9 @@ pub enum TSpins {
 
 pub struct Score {
     pub score: u32,
+    pub level: Level,
     high_score: u32,
     high_score_db: MicroKV,
-    lines: u32,
-    level: u8,
-    // speed: Duration,
     turn: (TSpins, Lines),
     turn_score: u32,
     last_turn: (TSpins, Lines),
@@ -53,10 +52,9 @@ impl<'a> Score {
         };
         Score {
             score: 0,
+            level: Level::new(),
             high_score,
             high_score_db,
-            lines: 0,
-            level: 1,
             turn_score: 0,
             last_turn_score: 0,
             last_turn_text: String::new(),
@@ -78,12 +76,28 @@ impl<'a> Score {
         self.text_color
     }
 
+    pub fn score(&self) -> u32 {
+        self.score
+    }
+
     pub fn high_score(&self) -> u32 {
         self.high_score
     }
 
     pub fn lines(&self) -> u32 {
-        self.lines
+        self.level.lines
+    }
+
+    pub fn lines_goal(&self) -> u32 {
+        self.level.lines_goal
+    }
+
+    pub fn level(&self) -> u8 {
+        self.level.level
+    }
+
+    pub fn add_lines(&mut self, lines: u32) {
+        self.level.add_lines(lines)
     }
 
     pub fn save_and_reset_score(&mut self) {
@@ -108,69 +122,71 @@ impl<'a> Score {
                 match self.turn {
                     (TSpins::None, Lines::Single) => {
                         // Single
-                        self.turn_score += 100 * self.level as u32;
+                        self.turn_score += 100 * self.level() as u32;
                         self.last_turn_text = "Single".to_string();
                     }
                     (TSpins::MiniTSpin, Lines::None) => {
                         // Mini T-Spin
-                        self.turn_score += 100 * self.level as u32;
+                        self.turn_score += 100 * self.level() as u32;
                         self.last_turn_text = "Mini T-Spin".to_string();
                     }
                     (TSpins::MiniTSpin, Lines::Single) => {
                         // Mini T-Spin Single
-                        self.turn_score += 200 * self.level as u32;
+                        self.turn_score += 200 * self.level() as u32;
                         self.last_turn_text = "Mini T-Spin Single".to_string();
                     }
                     (TSpins::None, Lines::Double) => {
                         // Double
-                        self.turn_score += 300 * self.level as u32;
+                        self.turn_score += 300 * self.level() as u32;
                         self.last_turn_text = "Double".to_string();
                     }
                     (TSpins::MiniTSpin, Lines::Double) => {
                         // Mini T-Spin Double
-                        self.turn_score += 400 * self.level as u32;
+                        self.turn_score += 400 * self.level() as u32;
                         self.last_turn_text = "Mini T-Spin Double".to_string();
                     }
                     (TSpins::TSpin, Lines::None) => {
                         // T-Spin
-                        self.turn_score += 400 * self.level as u32;
+                        self.turn_score += 400 * self.level() as u32;
                         self.last_turn_text = "T-Spin".to_string();
                     }
                     (TSpins::None, Lines::Triple) | (TSpins::MiniTSpin, Lines::Triple) => {
                         // Triple
-                        self.turn_score += 500 * self.level as u32;
+                        self.turn_score += 500 * self.level() as u32;
                         self.last_turn_text = "Triple".to_string();
                     }
                     (TSpins::None, Lines::Tetris)
                     | (TSpins::MiniTSpin, Lines::Tetris)
                     | (TSpins::TSpin, Lines::Tetris) => {
                         // Tetris
-                        self.turn_score += 800 * self.level as u32;
+                        self.turn_score += 800 * self.level() as u32;
                         self.last_turn_text = "Tetris".to_string();
                     }
                     (TSpins::TSpin, Lines::Single) => {
                         // T-Spin Single
-                        self.turn_score += 800 * self.level as u32;
+                        self.turn_score += 800 * self.level() as u32;
                         self.last_turn_text = "T-Spin Single".to_string();
                     }
                     (TSpins::TSpin, Lines::Double) => {
                         // T-Spin Double
-                        self.turn_score += 1200 * self.level as u32;
+                        self.turn_score += 1200 * self.level() as u32;
                         self.last_turn_text = "T-Spin Double".to_string();
                     }
                     (TSpins::TSpin, Lines::Triple) => {
                         // T-Spin Triple
-                        self.turn_score += 1600 * self.level as u32;
+                        self.turn_score += 1600 * self.level() as u32;
                         self.last_turn_text = "T-Spin Triple".to_string();
                     }
-                    (TSpins::None, Lines::None) => {}
+                    (TSpins::None, Lines::None) => {
+                        self.last_turn_text = "-".to_string();
+                    }
                 }
 
                 // Combo points
                 if self.last_turn != (TSpins::None, Lines::None)
                     && self.turn != (TSpins::None, Lines::None)
                 {
-                    self.turn_score += 50 * self.level as u32;
+                    self.turn_score += 50 * self.level() as u32;
                     self.text_color = Color::LightRed;
                 } else {
                     self.text_color = Color::Gray;
@@ -178,10 +194,10 @@ impl<'a> Score {
 
                 // Count lines
                 match self.turn.1 {
-                    Lines::Single => self.lines += 1,
-                    Lines::Double => self.lines += 3,
-                    Lines::Triple => self.lines += 5,
-                    Lines::Tetris => self.lines += 8,
+                    Lines::Single => self.add_lines(1),
+                    Lines::Double => self.add_lines(3),
+                    Lines::Triple => self.add_lines(5),
+                    Lines::Tetris => self.add_lines(8),
                     Lines::None => {}
                 }
 

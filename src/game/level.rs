@@ -7,6 +7,7 @@ pub struct Level {
 }
 
 impl Level {
+    // Speed information from here: https://tetris.fandom.com/wiki/Tetris_Worlds (rounded slightly)
     const SPEEDS: [Duration; 16] = [
         Duration::from_millis(u64::MAX),
         Duration::from_millis(1000),

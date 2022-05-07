@@ -28,20 +28,23 @@ impl Events {
     }
 
     pub fn start(&self) {
-        let event_tx = self.tx.clone();
+        let tick_event_tx = self.tx.clone();
+        let input_event_tx = self.tx.clone();
         let tick_rate = Arc::clone(&self.tick_rate);
 
         thread::spawn(move || loop {
             let tr = tick_rate.lock().unwrap().clone();
             drop(tr);
+            tick_event_tx.send(InputEvent::Tick).unwrap();
+            thread::sleep(tr);
+        });
 
-            if event::poll(tr).unwrap() {
+        thread::spawn(move || loop {
+            if event::poll(Duration::MAX).unwrap() {
                 if let event::Event::Key(key_event) = event::read().unwrap() {
                     let key = key_event.into();
-                    event_tx.send(InputEvent::Input(key)).unwrap();
+                    input_event_tx.send(InputEvent::Input(key)).unwrap();
                 }
-            } else {
-                event_tx.send(InputEvent::Tick).unwrap();
             }
         });
     }

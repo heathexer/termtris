@@ -71,6 +71,7 @@ impl Piece {
         ],
     ];
 
+    // Piece shape data from here https://tetris.fandom.com/wiki/SRS?file=SRS-pieces.png
     pub const O: Piece = Piece {
         shapes: [
             [[0, 1, 1, 0], [0, 1, 1, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
@@ -153,21 +154,13 @@ impl Piece {
     ];
 
     pub fn random_bag<'a>() -> [&'a Piece; 7] {
+        // Ensures an even distribution of pieces by giving one of each type per 7
         let mut permutation = Piece::ALL.clone();
         permutation.shuffle(&mut rand::thread_rng());
 
         permutation
 
-        // Uncomment for all Ts for debug purposes
-        // [
-        //     &Piece::T,
-        //     &Piece::T,
-        //     &Piece::T,
-        //     &Piece::T,
-        //     &Piece::T,
-        //     &Piece::T,
-        //     &Piece::T,
-        // ]
+        // [&Piece::I; 7]
     }
 }
 

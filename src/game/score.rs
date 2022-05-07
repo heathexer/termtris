@@ -118,8 +118,20 @@ impl<'a> Score {
             HardDrop(len) => self.turn_score += 2 * len as u32,
             EndTurn => {
                 // Do score calculations
+
                 self.last_turn_text = String::new();
 
+                // Combo points
+                if self.last_turn != (TSpins::None, Lines::None)
+                    && self.turn != (TSpins::None, Lines::None)
+                {
+                    self.turn_score += 50 * self.level() as u32;
+                    self.text_color = Color::Cyan;
+                } else {
+                    self.text_color = Color::Gray;
+                }
+
+                // Score data taken from here: https://tetris.fandom.com/wiki/Scoring#Guideline_scoring_system
                 match self.turn {
                     (TSpins::None, Lines::Single) => {
                         // Single
@@ -145,7 +157,9 @@ impl<'a> Score {
                         // Mini T-Spin Double
                         if self.last_turn == (TSpins::MiniTSpin, Lines::Double) {
                             // Back to back
-                            // self.turn_score +=
+                            self.turn_score += 600 * self.level() as u32;
+                            self.last_turn_text = "B2B Mini T-Spin Double".to_owned();
+                            self.text_color = Color::LightMagenta;
                         } else {
                             // Once
                             self.turn_score += 400 * self.level() as u32;
@@ -162,44 +176,56 @@ impl<'a> Score {
                         self.turn_score += 500 * self.level() as u32;
                         self.last_turn_text = "Triple".to_string();
                     }
-                    (TSpins::None, Lines::Tetris)
-                    | (TSpins::MiniTSpin, Lines::Tetris)
-                    | (TSpins::TSpin, Lines::Tetris) => {
+                    (_, Lines::Tetris) => {
                         // Tetris
-                        self.turn_score += 800 * self.level() as u32;
-                        self.last_turn_text = "Tetris".to_string();
+                        if self.last_turn.1 == Lines::Tetris {
+                            self.turn_score += 1200 * self.level() as u32;
+                            self.last_turn_text = "B2B Tetris".to_string();
+                            self.text_color = Color::LightMagenta;
+                        } else {
+                            self.turn_score += 800 * self.level() as u32;
+                            self.last_turn_text = "Tetris".to_string();
+                        }
                     }
                     (TSpins::TSpin, Lines::Single) => {
                         // T-Spin Single
-                        self.turn_score += 800 * self.level() as u32;
-                        self.last_turn_text = "T-Spin Single".to_string();
+                        if self.last_turn == (TSpins::TSpin, Lines::Single) {
+                            self.turn_score += 1200 * self.level() as u32;
+                            self.last_turn_text = "B2B T-Spin Single".to_string();
+                            self.text_color = Color::LightMagenta;
+                        } else {
+                            self.turn_score += 800 * self.level() as u32;
+                            self.last_turn_text = "T-Spin Single".to_string();
+                        }
                     }
                     (TSpins::TSpin, Lines::Double) => {
                         // T-Spin Double
-                        self.turn_score += 1200 * self.level() as u32;
-                        self.last_turn_text = "T-Spin Double".to_string();
+                        if self.last_turn == (TSpins::TSpin, Lines::Double) {
+                            self.turn_score += 1800 * self.level() as u32;
+                            self.last_turn_text = "B2B T-Spin Double".to_string();
+                            self.text_color = Color::LightMagenta;
+                        } else {
+                            self.turn_score += 1200 * self.level() as u32;
+                            self.last_turn_text = "T-Spin Double".to_string();
+                        }
                     }
                     (TSpins::TSpin, Lines::Triple) => {
                         // T-Spin Triple
-                        self.turn_score += 1600 * self.level() as u32;
-                        self.last_turn_text = "T-Spin Triple".to_string();
+                        if self.last_turn == (TSpins::TSpin, Lines::Triple) {
+                            self.turn_score += 2400 * self.level() as u32;
+                            self.last_turn_text = "B2B T-Spin Triple".to_string();
+                            self.text_color = Color::LightMagenta;
+                        } else {
+                            self.turn_score += 1600 * self.level() as u32;
+                            self.last_turn_text = "T-Spin Triple".to_string();
+                        }
                     }
                     (TSpins::None, Lines::None) => {
                         self.last_turn_text = "-".to_string();
                     }
                 }
 
-                // Combo points
-                if self.last_turn != (TSpins::None, Lines::None)
-                    && self.turn != (TSpins::None, Lines::None)
-                {
-                    self.turn_score += 50 * self.level() as u32;
-                    self.text_color = Color::LightRed;
-                } else {
-                    self.text_color = Color::Gray;
-                }
-
-                // Count lines
+                // Count lines (Numbers from here https://tetris.fandom.com/wiki/Tetris_Guideline)
                 match self.turn.1 {
                     Lines::Single => self.add_lines(1),
                     Lines::Double => self.add_lines(3),

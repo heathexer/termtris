@@ -171,6 +171,10 @@ impl<'a> Game<'a> {
         }
     }
 
+    pub fn is_locking(&self) -> bool {
+        self.piece_offset.0 == self.ghost_offset.0
+    }
+
     pub fn move_left(&mut self) {
         let new_offset = (
             self.piece_offset.0 as isize,

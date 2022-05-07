@@ -37,10 +37,10 @@ impl Action {
             Action::ShiftLeft => vec![Key::Plain(BaseKey::Left), Key::Plain(BaseKey::Char('a'))],
             Action::ShiftRight => vec![Key::Plain(BaseKey::Right), Key::Plain(BaseKey::Char('d'))],
             Action::RotateLeft => vec![
-                Key::Plain(BaseKey::Char('q')),
+                Key::Plain(BaseKey::Char('z')),
                 Key::Plain(BaseKey::Char(',')),
             ],
-            Action::RotateRight => vec![Key::Plain(BaseKey::Char('e')), Key::Plain(BaseKey::Up)],
+            Action::RotateRight => vec![Key::Plain(BaseKey::Char('x')), Key::Plain(BaseKey::Up)],
             Action::HardDrop => vec![Key::Plain(BaseKey::Char(' '))],
             Action::SoftDrop => vec![Key::Plain(BaseKey::Down)],
             Action::Hold => vec![Key::Plain(BaseKey::Char('c'))],

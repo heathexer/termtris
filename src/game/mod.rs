@@ -20,7 +20,7 @@ use self::{
 
 pub struct Game<'a> {
     board: Board,
-    score: Score,
+    pub score: Score,
     piece_bag: VecDeque<&'a Piece>,
     cur_piece: &'a Piece,
     next_piece: &'a Piece,

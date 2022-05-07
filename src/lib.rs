@@ -18,8 +18,10 @@ pub fn start_ui(app: Rc<RefCell<App>>) -> Result<(), io::Error> {
     terminal.clear()?;
     terminal.hide_cursor()?;
 
-    let tick_rate = Duration::from_millis(250);
-    let events = Events::new(tick_rate);
+    let tick_rate = Duration::from_secs(1);
+
+    let mut events = Events::new(tick_rate);
+    events.start();
 
     loop {
         let mut app = app.borrow_mut();
@@ -33,8 +35,10 @@ pub fn start_ui(app: Rc<RefCell<App>>) -> Result<(), io::Error> {
             InputEvent::Tick => app.update_on_tick(),
         };
 
-        if result == AppReturn::Exit {
-            break;
+        match result {
+            AppReturn::Continue => {}
+            AppReturn::UpdateSpeed => events.update_tick_rate(app.get_tick_delay()),
+            AppReturn::Exit => break,
         }
     }
 

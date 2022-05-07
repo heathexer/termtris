@@ -107,6 +107,7 @@ impl<'a> Score {
         }
 
         self.score = 0;
+        self.level = Level::new();
     }
 
     pub fn do_event(&mut self, event: ScoreEvent) {
@@ -142,8 +143,14 @@ impl<'a> Score {
                     }
                     (TSpins::MiniTSpin, Lines::Double) => {
                         // Mini T-Spin Double
-                        self.turn_score += 400 * self.level() as u32;
-                        self.last_turn_text = "Mini T-Spin Double".to_string();
+                        if self.last_turn == (TSpins::MiniTSpin, Lines::Double) {
+                            // Back to back
+                            // self.turn_score +=
+                        } else {
+                            // Once
+                            self.turn_score += 400 * self.level() as u32;
+                            self.last_turn_text = "Mini T-Spin Double".to_string();
+                        }
                     }
                     (TSpins::TSpin, Lines::None) => {
                         // T-Spin

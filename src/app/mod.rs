@@ -2,6 +2,8 @@ pub mod actions;
 pub mod state;
 pub mod ui;
 
+use std::time::Duration;
+
 use self::{
     actions::{Action, Actions},
     state::AppState,
@@ -13,6 +15,7 @@ use crate::{game::Game, inputs::keys::Key};
 pub enum AppReturn {
     Exit,
     Continue,
+    UpdateSpeed,
 }
 
 pub struct App<'a> {
@@ -35,6 +38,10 @@ impl<'a> App<'a> {
 
     pub fn actions(&self) -> &Actions {
         &self.actions
+    }
+
+    pub fn get_tick_delay(&self) -> Duration {
+        self.game.score.level.get_tick_delay()
     }
 
     // Handle an input
@@ -79,6 +86,6 @@ impl<'a> App<'a> {
     // Handle a tick
     pub fn update_on_tick(&mut self) -> AppReturn {
         self.game.move_down();
-        AppReturn::Continue
+        AppReturn::UpdateSpeed
     }
 }

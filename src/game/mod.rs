@@ -4,7 +4,7 @@ mod level;
 mod piece;
 mod score;
 
-use std::collections::VecDeque;
+use std::{collections::VecDeque, time::Instant};
 use tui::{
     style::{Color, Modifier, Style},
     text::{Span, Spans},
@@ -30,6 +30,7 @@ pub struct Game<'a> {
     piece_offset: (isize, isize),
     ghost_offset: (isize, isize),
     score_log: VecDeque<Spans<'a>>,
+    last_move: Instant,
 }
 
 impl<'a> Game<'a> {
@@ -49,6 +50,7 @@ impl<'a> Game<'a> {
         let piece_offset = (0, 0);
         let ghost_offset = (0, 0);
         let score_log = VecDeque::from(vec![Spans::from(Span::raw("-")); 7]);
+        let last_move = Instant::now();
 
         let mut game = Game {
             board,
@@ -62,6 +64,7 @@ impl<'a> Game<'a> {
             ghost_offset,
             piece_bag,
             score_log,
+            last_move,
         };
 
         game.reset_piece(false);
@@ -182,6 +185,7 @@ impl<'a> Game<'a> {
         );
         if self.try_move(new_offset, self.cur_rotation) {
             self.piece_offset.1 = new_offset.1;
+            self.last_move = Instant::now();
         }
         self.update_ghost_position();
     }
@@ -193,6 +197,7 @@ impl<'a> Game<'a> {
         );
         if self.try_move(new_offset, self.cur_rotation) {
             self.piece_offset.1 = new_offset.1;
+            self.last_move = Instant::now();
         }
         self.update_ghost_position();
     }
@@ -206,7 +211,8 @@ impl<'a> Game<'a> {
         let new_offset = (self.piece_offset.0 - 1, self.piece_offset.1);
         if self.try_move(new_offset, self.cur_rotation) {
             self.piece_offset.0 = new_offset.0;
-        } else {
+            self.last_move = Instant::now();
+        } else if self.last_move.elapsed().as_millis() > 500 {
             self.lock_piece();
         }
     }
@@ -214,7 +220,9 @@ impl<'a> Game<'a> {
     pub fn rotate_left(&mut self) {
         let new_rotation = (self.cur_rotation + 3) % 4;
 
-        self.try_rotate_with_kick(new_rotation);
+        if self.try_rotate_with_kick(new_rotation) {
+            self.last_move = Instant::now();
+        }
 
         self.update_ghost_position();
     }
@@ -222,7 +230,9 @@ impl<'a> Game<'a> {
     pub fn rotate_right(&mut self) {
         let new_rotation = (self.cur_rotation + 1) % 4;
 
-        self.try_rotate_with_kick(new_rotation);
+        if self.try_rotate_with_kick(new_rotation) {
+            self.last_move = Instant::now();
+        }
 
         self.update_ghost_position();
     }
@@ -261,7 +271,7 @@ impl<'a> Game<'a> {
         n_corners >= 3
     }
 
-    fn try_rotate_with_kick(&mut self, new_rotation: u8) {
+    fn try_rotate_with_kick(&mut self, new_rotation: u8) -> bool {
         if self.try_move(self.piece_offset, new_rotation) {
             self.cur_rotation = new_rotation;
 
@@ -270,7 +280,7 @@ impl<'a> Game<'a> {
                 self.score.do_event(ScoreEvent::TSpin(TSpins::TSpin));
             }
 
-            return;
+            return true;
         }
 
         let mut new_offset;
@@ -285,9 +295,11 @@ impl<'a> Game<'a> {
                     self.score.do_event(ScoreEvent::TSpin(TSpins::MiniTSpin));
                 }
 
-                return;
+                return true;
             }
         }
+
+        false
     }
 
     fn reset_piece(&mut self, use_next_piece: bool) {

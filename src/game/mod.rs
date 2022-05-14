@@ -18,6 +18,7 @@ use self::{
     score::{Lines, Score, ScoreEvent, TSpins},
 };
 
+// Struct for storing the overall game state with methods to interact with it
 pub struct Game<'a> {
     board: Board,
     pub score: Score,
@@ -33,6 +34,8 @@ pub struct Game<'a> {
     last_move: Instant,
 }
 
+// I can't think of a reason to have a Default impl for any structs in this project but I'm open to any reasons
+#[allow(clippy::new_without_default)]
 impl<'a> Game<'a> {
     pub const WIDTH: usize = 10;
     pub const HEIGHT: usize = 40;

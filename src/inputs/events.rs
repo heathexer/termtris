@@ -33,8 +33,10 @@ impl Events {
         let tick_rate = Arc::clone(&self.tick_rate);
 
         thread::spawn(move || loop {
+            // Needs to be cloned out so the lock isn't held even though Clippy complains about it
+            #[allow(clippy::clone_on_copy)]
             let tr = tick_rate.lock().unwrap().clone();
-            drop(tr);
+
             tick_event_tx.send(InputEvent::Tick).unwrap();
             thread::sleep(tr);
         });

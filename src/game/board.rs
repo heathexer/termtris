@@ -8,6 +8,7 @@ use tui::{
     widgets::Paragraph,
 };
 
+// Struct to store the state of the game board with an impl to turn it into a Paragrpah for rendering
 #[derive(Clone)]
 pub struct Board(pub [[BoardColor; Game::WIDTH]; Game::HEIGHT]);
 
@@ -17,10 +18,11 @@ impl Board {
     }
 }
 
-impl<'a> Into<Paragraph<'a>> for Board {
-    fn into(self) -> Paragraph<'a> {
+impl<'a> From<Board> for Paragraph<'a> {
+    fn from(board: Board) -> Paragraph<'a> {
         let mut text = Vec::new();
-        self.0.iter().enumerate().for_each(|(i, row)| {
+
+        board.0.iter().enumerate().for_each(|(i, row)| {
             if i < Game::HEIGHT - Game::DISPLAY_HEIGHT {
                 let mut text_row = Vec::<Span>::new();
 

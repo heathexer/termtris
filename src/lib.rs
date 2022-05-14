@@ -18,7 +18,7 @@ pub fn start_ui(app: Rc<RefCell<App>>) -> Result<(), io::Error> {
     terminal.clear()?;
     terminal.hide_cursor()?;
 
-    let tick_rate = Duration::from_secs(1);
+    let tick_rate = Duration::from_millis(100);
 
     let mut events = Events::new(tick_rate);
     events.start();

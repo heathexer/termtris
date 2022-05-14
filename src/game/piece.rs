@@ -4,6 +4,7 @@ use tui::{
     text::{Span, Spans},
 };
 
+// Struct to store constant piece data including its shape at every rotation, piece color, and kick offsets
 #[derive(Clone, Eq, PartialEq)]
 pub struct Piece {
     pub shapes: [[[u8; 4]; 4]; 4],
@@ -155,7 +156,7 @@ impl Piece {
 
     pub fn random_bag<'a>() -> [&'a Piece; 7] {
         // Ensures an even distribution of pieces by giving one of each type per 7
-        let mut permutation = Piece::ALL.clone();
+        let mut permutation = Piece::ALL;
         permutation.shuffle(&mut rand::thread_rng());
 
         permutation
@@ -164,18 +165,17 @@ impl Piece {
     }
 }
 
-impl<'a> Into<Vec<Spans<'a>>> for &Piece {
-    fn into(self) -> Vec<Spans<'a>> {
-        let mut text = Vec::new();
-        text.push(Spans::from(Span::styled(
+impl<'a> From<&Piece> for Vec<Spans<'a>> {
+    fn from(piece: &Piece) -> Self {
+        let mut text = vec![Spans::from(Span::styled(
             "",
             Style::default().fg(Color::Gray),
-        )));
+        ))];
 
-        self.shapes[0].iter().take(2).for_each(|row| {
+        piece.shapes[0].iter().take(2).for_each(|row| {
             let mut text_row = Vec::<Span>::new();
 
-            match self {
+            match piece {
                 &Piece::O | &Piece::I => {}
                 _ => {
                     // Add a half block of space to center odd width blocks
@@ -185,7 +185,7 @@ impl<'a> Into<Vec<Spans<'a>>> for &Piece {
 
             row.iter().for_each(|cell| {
                 text_row.push(if *cell != 0 {
-                    colors::cell_to_span("██", self.color)
+                    colors::cell_to_span("██", piece.color)
                 } else {
                     Span::raw("  ")
                 });

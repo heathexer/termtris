@@ -96,12 +96,11 @@ fn draw_help<'a>() -> Table<'a> {
         .fg(Color::Gray)
         .add_modifier(Modifier::BOLD);
 
-    let mut rows = vec![];
     // Empty row for padding
-    rows.push(Row::new(vec![
+    let mut rows = vec![Row::new(vec![
         Cell::from(Span::raw("")),
         Cell::from(Span::raw("")),
-    ]));
+    ])];
 
     for action in Action::iterator() {
         let key = action.keys()[0];

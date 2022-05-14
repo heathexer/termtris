@@ -3,6 +3,8 @@ use super::level::Level;
 use microkv::MicroKV;
 use tui::style::Color;
 
+// Enum with a variant for every scoring move, and an EndTurn to signal when score should be calculated and updated
+// It might make more sense to split off end turn into a separate function but I'm too lazy at the moment
 #[derive(Eq, PartialEq, Clone, Copy)]
 pub enum ScoreEvent {
     LineClear(Lines),
@@ -28,6 +30,7 @@ pub enum TSpins {
     TSpin,
 }
 
+// Struct to store data about the current score with methods to interact with it
 pub struct Score {
     pub score: u32,
     pub level: Level,
@@ -41,6 +44,8 @@ pub struct Score {
     text_color: Color,
 }
 
+// I can't think of a reason to have a Default impl for any structs in this project but I'm open to any reasons
+#[allow(clippy::new_without_default)]
 impl<'a> Score {
     pub fn new() -> Self {
         let high_score_db = MicroKV::open("score.data")

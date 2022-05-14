@@ -18,12 +18,16 @@ pub enum AppReturn {
     UpdateSpeed,
 }
 
+// Struct to store the overall app state and process input events
+// State is pretty much unused for now, but planned for use when pause/menus are added
 pub struct App<'a> {
     actions: Actions,
     _state: AppState,
     game: Game<'a>,
 }
 
+// I can't think of a reason to have a Default impl for any structs in this project but I'm open to any reasons
+#[allow(clippy::new_without_default)]
 impl<'a> App<'a> {
     pub fn new() -> Self {
         let actions = Actions::from(Action::iterator().cloned().collect::<Vec<_>>());

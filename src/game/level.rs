@@ -1,13 +1,18 @@
 use std::time::Duration;
 
+// Struct to store the player level and info associated with it, including constant tick delay data
 pub struct Level {
     pub level: u8,
     pub lines: u32,
     pub lines_goal: u32,
 }
 
+// I can't think of a reason to have a Default impl for any structs in this project but I'm open to any reasons
+#[allow(clippy::new_without_default)]
 impl Level {
     // Speed information from here: https://tetris.fandom.com/wiki/Tetris_Worlds (rounded slightly)
+    // Allowing zero prefixed literals for better alignment
+    #[allow(clippy::zero_prefixed_literal)]
     const SPEEDS: [Duration; 16] = [
         Duration::from_millis(u64::MAX),
         Duration::from_millis(1000),

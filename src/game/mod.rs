@@ -210,14 +210,17 @@ impl<'a> Game<'a> {
         self.score.do_event(ScoreEvent::SoftDrop(1));
     }
 
-    pub fn move_down(&mut self) {
+    pub fn move_down(&mut self) -> bool {
         let new_offset = (self.piece_offset.0 - 1, self.piece_offset.1);
         if self.try_move(new_offset, self.cur_rotation) {
             self.piece_offset.0 = new_offset.0;
             self.last_move = Instant::now();
+            return true;
         } else if self.last_move.elapsed().as_millis() > 500 {
-            self.lock_piece();
+            return self.lock_piece();
         }
+
+        true
     }
 
     pub fn rotate_left(&mut self) {
@@ -305,7 +308,7 @@ impl<'a> Game<'a> {
         false
     }
 
-    fn reset_piece(&mut self, use_next_piece: bool) {
+    fn reset_piece(&mut self, use_next_piece: bool) -> bool {
         if use_next_piece {
             self.cur_piece = self.next_piece;
 
@@ -323,9 +326,13 @@ impl<'a> Game<'a> {
         if !self.try_move(self.piece_offset, self.cur_rotation) {
             self.board.reset();
             self.score.save_and_reset_score();
+            self.update_ghost_position();
+            return false;
         }
 
         self.update_ghost_position();
+
+        true
     }
 
     fn update_ghost_position(&mut self) {
@@ -404,7 +411,7 @@ impl<'a> Game<'a> {
         true
     }
 
-    fn lock_piece(&mut self) {
+    fn lock_piece(&mut self) -> bool {
         for (i, row) in self.cur_piece.shapes[self.cur_rotation as usize]
             .iter()
             .enumerate()
@@ -420,10 +427,10 @@ impl<'a> Game<'a> {
 
         self.clear_lines();
 
-        self.reset_piece(true);
-
         self.update_score_log();
 
         self.can_hold = true;
+
+        self.reset_piece(true)
     }
 }

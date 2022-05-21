@@ -1,21 +1,19 @@
 pub mod actions;
-pub mod state;
-pub mod ui;
+pub mod game_ui;
+pub mod start_ui;
 
 use std::time::Duration;
 
-use self::{
-    actions::{Action, Actions},
-    state::AppState,
-};
+use self::actions::{Action, Actions};
 
-use crate::{game::Game, inputs::keys::Key};
+use crate::{game::Game, inputs::keys::Key, AppState};
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum AppReturn {
+pub(crate) enum AppReturn {
     Exit,
     Continue,
     UpdateSpeed,
+    Transition(AppState),
 }
 
 // Struct to store the overall app state and process input events
@@ -31,7 +29,7 @@ pub struct App<'a> {
 impl<'a> App<'a> {
     pub fn new() -> Self {
         let actions = Actions::from(Action::iterator().cloned().collect::<Vec<_>>());
-        let state = AppState::initialized();
+        let state = AppState::new();
         let game = Game::new();
         App {
             actions,
@@ -40,16 +38,16 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn actions(&self) -> &Actions {
+    fn actions(&self) -> &Actions {
         &self.actions
     }
 
-    pub fn get_tick_delay(&self) -> Duration {
+    pub(crate) fn get_tick_delay(&self) -> Duration {
         self.game.score.level.get_tick_delay()
     }
 
     // Handle an input
-    pub fn do_action(&mut self, key: Key) -> AppReturn {
+    pub(crate) fn do_action(&mut self, key: Key) -> AppReturn {
         if let Some(action) = self.actions.find(key) {
             match action {
                 Action::Quit => AppReturn::Exit,
@@ -88,8 +86,11 @@ impl<'a> App<'a> {
     }
 
     // Handle a tick
-    pub fn update_on_tick(&mut self) -> AppReturn {
-        self.game.move_down();
-        AppReturn::UpdateSpeed
+    pub(crate) fn update_on_tick(&mut self) -> AppReturn {
+        if self.game.move_down() {
+            AppReturn::UpdateSpeed
+        } else {
+            AppReturn::Transition(AppState::MainMenu)
+        }
     }
 }

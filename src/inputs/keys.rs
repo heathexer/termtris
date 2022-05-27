@@ -6,6 +6,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 pub enum BaseKey {
     None,
     Char(char),
+    Escape,
     Enter,
     Tab,
     Left,
@@ -26,6 +27,7 @@ impl Display for BaseKey {
             BaseKey::None => write!(f, ""),
             BaseKey::Char(' ') => write!(f, "Space"),
             BaseKey::Char(c) => write!(f, "{}", c),
+            BaseKey::Escape => write!(f, "Esc"),
             BaseKey::Enter => write!(f, "Enter"),
             BaseKey::Tab => write!(f, "Tab"),
             BaseKey::Left => write!(f, "←"),

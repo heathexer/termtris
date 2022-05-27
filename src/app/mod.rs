@@ -1,10 +1,14 @@
 pub mod actions;
 pub mod game_ui;
+pub mod menu_actions;
 pub mod start_ui;
 
 use std::time::Duration;
 
-use self::actions::{Action, Actions};
+use self::{
+    actions::{Action, Actions},
+    menu_actions::MenuAction,
+};
 
 use crate::{game::Game, inputs::keys::Key, AppState};
 
@@ -20,6 +24,7 @@ pub(crate) enum AppReturn {
 // State is pretty much unused for now, but planned for use when pause/menus are added
 pub struct App<'a> {
     actions: Actions,
+    menu_actions: MenuActions,
     _state: AppState,
     game: Game<'a>,
 }
@@ -48,8 +53,28 @@ impl<'a> App<'a> {
 
     // Handle an input
     pub(crate) fn do_action(&mut self, key: Key) -> AppReturn {
-        if let Some(action) = self.actions.find(key) {
-            match action {
+        match self._state {
+            AppState::MainMenu => self.do_menu_action(self.menu_actions.find(key)),
+            AppState::Running => self.do_game_action(self.actions.find(key)),
+        }
+    }
+
+    pub(crate) fn do_menu_action(&mut self, action: Option<&MenuAction>) -> AppReturn {
+        if let Some(a) = action {
+            match a {
+                MenuAction::Exit => todo!(),
+                MenuAction::Previous => todo!(),
+                MenuAction::Next => todo!(),
+                MenuAction::Confirm => todo!(),
+            }
+        }
+
+        AppReturn::Continue
+    }
+
+    pub(crate) fn do_game_action(&mut self, action: Option<&Action>) -> AppReturn {
+        if let Some(a) = action {
+            match a {
                 Action::Quit => AppReturn::Exit,
                 Action::ShiftLeft => {
                     self.game.move_left();

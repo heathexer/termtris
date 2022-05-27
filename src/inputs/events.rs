@@ -42,11 +42,9 @@ impl Events {
         });
 
         thread::spawn(move || loop {
-            if event::poll(Duration::MAX).unwrap() {
-                if let event::Event::Key(key_event) = event::read().unwrap() {
-                    let key = key_event.into();
-                    input_event_tx.send(InputEvent::Input(key)).unwrap();
-                }
+            if let event::Event::Key(key_event) = event::read().unwrap() {
+                let key = key_event.into();
+                input_event_tx.send(InputEvent::Input(key)).unwrap();
             }
         });
     }
